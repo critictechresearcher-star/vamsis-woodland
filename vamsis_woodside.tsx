@@ -1,0 +1,740 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Menu, X, MapPin, Phone, Mail, Wifi, Tv, 
+  Coffee, Gamepad2, Flame, Shield, Home as HomeIcon, 
+  Bath, ArrowRight, ChevronRight, CheckCircle2,
+  BedDouble, Utensils, TreePine, Map, Calendar
+} from 'lucide-react';
+
+// --- Global Data & Constants ---
+
+const PHONE_1 = "+91 94449 66732";
+const PHONE_2 = "+91 75500 09664";
+const ADDRESS = "1523/4, Muluvi, Elavadi, Tamil Nadu – 636602";
+const WHATSAPP_NUM = "919444966732";
+
+const IMAGES = {
+  heroHome: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1920&q=80", // Misty mountain landscape
+  exterior: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=1200&q=80", // Villa exterior
+  bedroom1: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1000&q=80",
+  bedroom2: "https://images.unsplash.com/photo-1522771731470-7a437360bf00?auto=format&fit=crop&w=1000&q=80",
+  hall: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+  kitchen: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=1000&q=80",
+  bathroom: "https://images.unsplash.com/photo-1620626011761-996317b8d101?auto=format&fit=crop&w=1000&q=80",
+  bonfire: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=1000&q=80",
+  yercaudLake: "https://images.unsplash.com/photo-1621815124978-57d4fb0e12d5?auto=format&fit=crop&w=1200&q=80",
+  heroStay: "https://images.unsplash.com/photo-1499955085172-a104c9463ece?auto=format&fit=crop&w=1920&q=80",
+  heroAmenities: "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?auto=format&fit=crop&w=1920&q=80",
+  heroGallery: "https://images.unsplash.com/photo-1472224371017-08207f84aaae?auto=format&fit=crop&w=1920&q=80",
+  heroDiscover: "https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=1920&q=80",
+  heroAbout: "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=1920&q=80",
+  heroContact: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80",
+};
+
+const NAV_LINKS = [
+  { name: 'HOME', id: 'home' },
+  { name: 'STAY', id: 'stay' },
+  { name: 'AMENITIES', id: 'amenities' },
+  { name: 'GALLERY', id: 'gallery' },
+  { name: 'DISCOVER', id: 'discover' },
+  { name: 'ABOUT US', id: 'about' },
+  { name: 'CONTACT', id: 'contact' },
+];
+
+// --- Shared UI Components ---
+
+const Button = ({ children, variant = 'primary', onClick, className = '' }) => {
+  const baseStyle = "inline-flex items-center justify-center px-8 py-4 text-sm tracking-widest uppercase transition-all duration-300 font-medium";
+  const variants = {
+    primary: "bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg",
+    secondary: "bg-transparent text-white border border-white hover:bg-white hover:text-slate-900",
+    outlineDark: "bg-transparent text-slate-900 border border-slate-900 hover:bg-slate-900 hover:text-white"
+  };
+  return (
+    <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+      {children}
+    </button>
+  );
+};
+
+const SectionHeading = ({ title, subtitle, dark = false, centered = false }) => (
+  <div className={`mb-12 ${centered ? 'text-center' : ''}`}>
+    {subtitle && (
+      <span className={`block text-xs font-semibold tracking-[0.2em] uppercase mb-3 ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
+        {subtitle}
+      </span>
+    )}
+    <h2 className={`font-serif text-3xl md:text-5xl leading-tight ${dark ? 'text-white' : 'text-slate-900'}`}>
+      {title}
+    </h2>
+  </div>
+);
+
+const PageHero = ({ title, subtitle, bgImage, cta, onCtaClick }) => (
+  <div className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
+    <div className="absolute inset-0">
+      <img src={bgImage} alt={title} className="w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/50"></div>
+    </div>
+    <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
+      <h1 className="font-serif text-4xl md:text-6xl text-white mb-6 animate-fade-in-up">{title}</h1>
+      {subtitle && <p className="text-lg md:text-xl text-slate-200 mb-8 font-light tracking-wide">{subtitle}</p>}
+      {cta && (
+        <Button variant="secondary" onClick={onCtaClick}>{cta}</Button>
+      )}
+    </div>
+  </div>
+);
+
+// --- Layout Components ---
+
+const Navbar = ({ currentPage, setPage }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNav = (id) => {
+    setPage(id);
+    setIsMobileMenuOpen(false);
+  };
+
+  return (
+    <>
+      <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-white shadow-md py-4' : 'bg-transparent py-6'}`}>
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+          {/* Logo */}
+          <div 
+            className={`font-serif text-2xl tracking-widest cursor-pointer ${isScrolled ? 'text-slate-900' : 'text-white'}`}
+            onClick={() => handleNav('home')}
+          >
+            VAMSI'S<br/><span className="text-sm tracking-[0.3em] font-sans">WOODSIDE</span>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center space-x-8">
+            {NAV_LINKS.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => handleNav(link.id)}
+                className={`text-sm tracking-widest transition-colors ${
+                  isScrolled 
+                    ? (currentPage === link.id ? 'text-slate-900 font-semibold' : 'text-slate-500 hover:text-slate-900')
+                    : (currentPage === link.id ? 'text-white font-semibold border-b border-white' : 'text-slate-300 hover:text-white')
+                }`}
+              >
+                {link.name}
+              </button>
+            ))}
+            <Button 
+              variant={isScrolled ? 'primary' : 'secondary'} 
+              className="ml-4 py-3 px-6"
+              onClick={() => handleNav('contact')}
+            >
+              BOOK NOW
+            </Button>
+          </div>
+
+          {/* Mobile Toggle */}
+          <button 
+            className={`lg:hidden ${isScrolled ? 'text-slate-900' : 'text-white'}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div className={`fixed inset-0 bg-slate-900 z-40 transition-transform duration-500 flex flex-col justify-center items-center ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="flex flex-col space-y-6 text-center">
+          {NAV_LINKS.map((link) => (
+            <button
+              key={link.id}
+              onClick={() => handleNav(link.id)}
+              className={`text-2xl font-serif tracking-widest ${currentPage === link.id ? 'text-white' : 'text-slate-400'}`}
+            >
+              {link.name}
+            </button>
+          ))}
+          <div className="pt-8">
+            <Button variant="secondary" onClick={() => handleNav('contact')}>BOOK YOUR STAY</Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const Footer = ({ setPage }) => (
+  <footer className="bg-slate-950 text-slate-300 py-20 px-6">
+    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+      {/* Brand */}
+      <div>
+        <div className="font-serif text-2xl text-white tracking-widest mb-6">
+          VAMSI'S<br/><span className="text-sm tracking-[0.3em] font-sans">WOODSIDE</span>
+        </div>
+        <p className="text-slate-400 font-light leading-relaxed">
+          A peaceful villa retreat in Yercaud, designed for comfortable stays, memorable gatherings, and refreshing getaways.
+        </p>
+      </div>
+
+      {/* Quick Links */}
+      <div>
+        <h4 className="text-white text-sm font-semibold tracking-widest uppercase mb-6">Quick Links</h4>
+        <ul className="space-y-3">
+          {NAV_LINKS.map(link => (
+            <li key={link.id}>
+              <button onClick={() => setPage(link.id)} className="hover:text-white transition-colors">{link.name}</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Contact */}
+      <div>
+        <h4 className="text-white text-sm font-semibold tracking-widest uppercase mb-6">Contact</h4>
+        <ul className="space-y-4 text-slate-400 font-light">
+          <li className="flex items-start"><Phone size={18} className="mr-3 mt-1 flex-shrink-0" /> {PHONE_1}<br/>{PHONE_2}</li>
+          <li className="flex items-start"><MapPin size={18} className="mr-3 mt-1 flex-shrink-0" /> Vamsis Woodside<br/>{ADDRESS}</li>
+        </ul>
+      </div>
+
+      {/* Booking */}
+      <div>
+        <h4 className="text-white text-sm font-semibold tracking-widest uppercase mb-6">Ready to visit?</h4>
+        <Button variant="secondary" className="w-full" onClick={() => setPage('contact')}>BOOK YOUR STAY</Button>
+      </div>
+    </div>
+    <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
+      © 2026 Vamsis Woodside. All Rights Reserved.
+    </div>
+  </footer>
+);
+
+// --- Page Components ---
+
+const HomePage = ({ setPage }) => {
+  return (
+    <div className="animate-fade-in">
+      {/* SECTION 1: HERO */}
+      <div className="relative h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={IMAGES.heroHome} alt="Vamsis Woodside Hero" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-slate-900/40"></div>
+        </div>
+        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-20">
+          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white mb-6 drop-shadow-lg tracking-wide">VAMSI'S WOODSIDE</h1>
+          <p className="text-xl md:text-2xl text-slate-100 mb-10 font-light tracking-wide font-serif italic">A Peaceful Villa Escape in Yercaud</p>
+          <p className="text-base md:text-lg text-slate-200 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
+            Escape the everyday and experience a refreshing getaway surrounded by nature. Vamsis Woodside offers a comfortable private villa experience for families, friends, and groups looking to relax, reconnect, and create memorable moments.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <Button variant="secondary" onClick={() => setPage('stay')}>EXPLORE THE VILLA</Button>
+            <Button variant="primary" onClick={() => setPage('contact')}>BOOK YOUR STAY</Button>
+          </div>
+        </div>
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-white">
+          <ArrowRight className="transform rotate-90" size={24} />
+        </div>
+      </div>
+
+      {/* SECTION 2: INTRODUCTION */}
+      <section className="py-24 px-6 bg-stone-50">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <SectionHeading title="YOUR PRIVATE ESCAPE INTO NATURE" subtitle="Welcome" />
+            <div className="space-y-6 text-slate-600 font-light text-lg leading-relaxed">
+              <p>Welcome to Vamsis Woodside, a peaceful villa retreat nestled in the serene surroundings of Yercaud.</p>
+              <p>Designed for families and friends, our villa brings together spacious interiors, comfortable bedrooms, and inviting spaces for relaxation and togetherness.</p>
+              <p>Whether you're planning a family vacation, a weekend getaway, or a memorable gathering, Vamsis Woodside offers a refreshing escape from everyday life.</p>
+            </div>
+            <div className="mt-10">
+              <Button variant="outlineDark" onClick={() => setPage('stay')}>DISCOVER OUR VILLA</Button>
+            </div>
+          </div>
+          <div className="relative h-[600px] overflow-hidden rounded-sm shadow-2xl">
+            <img src={IMAGES.exterior} alt="Villa Exterior" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3: FEATURED STAY */}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading title="A STAY DESIGNED FOR TOGETHERNESS" subtitle="Comfortable Spaces. Memorable Moments." centered />
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+            {[
+              { title: "COMFORTABLE BEDROOMS", desc: "Enjoy spacious and well-furnished bedrooms designed for a relaxing stay.", icon: <BedDouble size={32}/> },
+              { title: "SPACIOUS HALL", desc: "A welcoming space for family gatherings, entertainment, and indoor activities.", icon: <HomeIcon size={32}/> },
+              { title: "FULLY EQUIPPED KITCHEN", desc: "Enjoy the convenience of a kitchen equipped with essential cooking facilities.", icon: <Utensils size={32}/> },
+              { title: "ENTERTAINMENT", desc: "Spend quality time with indoor games, entertainment, and shared experiences.", icon: <Gamepad2 size={32}/> }
+            ].map((card, i) => (
+              <div key={i} className="bg-stone-50 p-8 text-center group hover:bg-slate-900 hover:text-white transition-colors duration-500 rounded-sm">
+                <div className="text-slate-400 group-hover:text-white mb-6 flex justify-center transition-colors duration-500">{card.icon}</div>
+                <h3 className="font-serif text-xl mb-4">{card.title}</h3>
+                <p className="text-slate-600 group-hover:text-slate-300 font-light text-sm">{card.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Button variant="outlineDark" onClick={() => setPage('stay')}>EXPLORE THE VILLA</Button>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4: VILLA HIGHLIGHTS */}
+      <section className="py-24 px-6 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeading title="EVERYTHING YOU NEED FOR A COMFORTABLE STAY" subtitle="Amenities" dark centered />
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 mt-16">
+            {[
+              { label: "3 Spacious Bedrooms", icon: <BedDouble size={28}/> },
+              { label: "Spacious Hall", icon: <HomeIcon size={28}/> },
+              { label: "Fully Equipped Kitchen", icon: <Utensils size={28}/> },
+              { label: "Wi-Fi", icon: <Wifi size={28}/> },
+              { label: "Smart TV", icon: <Tv size={28}/> },
+              { label: "Indoor Games", icon: <Gamepad2 size={28}/> },
+              { label: "Bonfire Area", icon: <Flame size={28}/> },
+              { label: "Security & CCTV", icon: <Shield size={28}/> },
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full border border-slate-700 flex items-center justify-center mb-4 text-slate-300">
+                  {item.icon}
+                </div>
+                <span className="font-light tracking-wide">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5: GALLERY PREVIEW */}
+      <section className="py-24 px-6 bg-stone-50">
+        <div className="max-w-7xl mx-auto text-center">
+          <SectionHeading title="A GLIMPSE INTO VAMSI'S WOODSIDE" subtitle="Gallery" centered />
+          <p className="text-slate-600 max-w-2xl mx-auto mb-12">Explore the spaces, surroundings, and experiences that make Vamsis Woodside a memorable getaway.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+            <div className="md:col-span-2 h-64 md:h-96 overflow-hidden">
+              <img src={IMAGES.exterior} alt="Exterior" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 cursor-pointer" onClick={() => setPage('gallery')}/>
+            </div>
+            <div className="h-64 md:h-96 overflow-hidden">
+              <img src={IMAGES.bedroom1} alt="Bedroom" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 cursor-pointer" onClick={() => setPage('gallery')}/>
+            </div>
+            <div className="h-64 md:h-96 overflow-hidden">
+              <img src={IMAGES.hall} alt="Hall" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 cursor-pointer" onClick={() => setPage('gallery')}/>
+            </div>
+            <div className="md:col-span-2 h-64 md:h-96 overflow-hidden">
+              <img src={IMAGES.bonfire} alt="Bonfire" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 cursor-pointer" onClick={() => setPage('gallery')}/>
+            </div>
+          </div>
+          <Button variant="outlineDark" onClick={() => setPage('gallery')}>VIEW FULL GALLERY</Button>
+        </div>
+      </section>
+
+      {/* SECTION 6: EXPERIENCES */}
+      <section className="py-24 px-6 bg-white border-t border-stone-200">
+        <div className="max-w-7xl mx-auto">
+           <div className="text-center max-w-3xl mx-auto mb-16">
+            <SectionHeading title="MAKE EVERY MOMENT MEMORABLE" subtitle="Experiences" centered />
+            <p className="text-slate-600">From relaxing indoors to enjoying evenings with family and friends, Vamsis Woodside offers the perfect setting to slow down and enjoy meaningful moments together.</p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {['Relax & Unwind', 'Family Time', 'Indoor Entertainment', 'Bonfire Evenings'].map((exp, i) => (
+               <div key={i} className="relative h-80 overflow-hidden group rounded-sm">
+                  <img src={[IMAGES.bedroom2, IMAGES.hall, IMAGES.kitchen, IMAGES.bonfire][i]} alt={exp} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6">
+                    <h3 className="text-white font-serif text-xl tracking-wide">{exp}</h3>
+                  </div>
+               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 7: LOCATION & 8: CTA */}
+      <section className="bg-stone-100">
+        <div className="grid lg:grid-cols-2">
+          <div className="py-24 px-12 lg:px-24 flex flex-col justify-center">
+             <SectionHeading title="YOUR GETAWAY IN YERCAUD" subtitle="Location" />
+             <p className="text-slate-600 mb-8 leading-relaxed">
+               Escape to the peaceful surroundings of Muluvi, Yercaud, and enjoy a refreshing stay away from the everyday hustle.
+             </p>
+             <div className="bg-white p-6 border border-stone-200 mb-8 rounded-sm">
+                <p className="font-semibold text-slate-900 mb-2">Vamsis Woodside</p>
+                <p className="text-slate-600 text-sm mb-4">{ADDRESS}</p>
+                <p className="text-sm text-slate-500 italic flex items-center"><Map size={16} className="mr-2"/> Approximately 10 km from Yercaud Lake.</p>
+             </div>
+             <div>
+                <Button variant="outlineDark" onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent("1523/4, Muluvi, Elavadi, Yercaud")}`, '_blank')}>
+                  GET DIRECTIONS
+                </Button>
+             </div>
+          </div>
+          <div className="bg-slate-900 text-white py-24 px-12 lg:px-24 flex flex-col justify-center text-center lg:text-left">
+             <h2 className="font-serif text-4xl mb-6">YOUR NEXT GETAWAY STARTS HERE</h2>
+             <p className="text-slate-300 mb-10 text-lg font-light">
+               Planning a family getaway or a trip with friends? Make your next stay memorable at Vamsis Woodside.
+             </p>
+             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+               <Button variant="secondary" onClick={() => setPage('contact')}>BOOK YOUR STAY</Button>
+               <Button variant="primary" onClick={() => setPage('contact')} className="bg-white text-slate-900 hover:bg-slate-200">CONTACT US</Button>
+             </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const StayPage = ({ setPage }) => {
+  const sections = [
+    {
+      title: "COMFORTABLE BEDROOMS",
+      desc: "Each of our well-furnished bedrooms offers a blend of comfort and relaxation, featuring comfortable bedding, spacious interiors, and a welcoming atmosphere for a peaceful stay.",
+      details: ["Master Bedroom", "Queen Bedrooms", "Comfortable Bedding", "Attached Bathrooms"],
+      img: IMAGES.bedroom1,
+      reverse: false
+    },
+    {
+      title: "A SPACE TO COME TOGETHER",
+      subtitle: "Spacious Hall",
+      desc: "The heart of our villa, the spacious hall is ideal for family gatherings, indoor games, and entertainment. Enjoy comfortable seating and a large-screen TV while spending quality time with your group.",
+      img: IMAGES.hall,
+      reverse: true
+    },
+    {
+      title: "COOK, SHARE & ENJOY",
+      subtitle: "Kitchen & Dining",
+      desc: "Our fully equipped kitchen offers the convenience of essential cooking facilities, a refrigerator, stove, cutlery, and kitchenware. Enjoy the flexibility of preparing meals and sharing memorable dining moments with family and friends.",
+      img: IMAGES.kitchen,
+      reverse: false
+    },
+    {
+      title: "COMFORT IN EVERY DETAIL",
+      subtitle: "Bathrooms",
+      desc: "Our bathrooms offer a comfortable and convenient experience with modern amenities and well-maintained interiors.",
+      img: IMAGES.bathroom,
+      reverse: true
+    }
+  ];
+
+  return (
+    <div className="animate-fade-in bg-stone-50">
+      <PageHero 
+        title="YOUR HOME AWAY FROM HOME" 
+        subtitle="Discover comfortable spaces, spacious interiors, and a private villa experience designed for relaxation and togetherness."
+        bgImage={IMAGES.heroStay}
+      />
+      
+      <div className="py-12">
+        {sections.map((sec, idx) => (
+          <section key={idx} className={`py-16 px-6 ${sec.reverse ? 'bg-white' : 'bg-stone-50'}`}>
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+              <div className={`${sec.reverse ? 'lg:order-2' : ''}`}>
+                <SectionHeading title={sec.title} subtitle={sec.subtitle || `Section ${idx+1}`} />
+                <p className="text-slate-600 text-lg font-light leading-relaxed mb-8">{sec.desc}</p>
+                {sec.details && (
+                  <ul className="grid grid-cols-2 gap-4">
+                    {sec.details.map((d, i) => (
+                      <li key={i} className="flex items-center text-slate-700">
+                        <CheckCircle2 size={16} className="text-emerald-700 mr-2" />
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className={`relative h-[500px] shadow-xl ${sec.reverse ? 'lg:order-1' : ''}`}>
+                 <img src={sec.img} alt={sec.title} className="w-full h-full object-cover rounded-sm" />
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="py-24 bg-slate-900 text-center px-4">
+        <h2 className="font-serif text-4xl text-white mb-8">READY TO EXPERIENCE VAMSI'S WOODSIDE?</h2>
+        <Button variant="secondary" onClick={() => setPage('contact')}>BOOK YOUR STAY</Button>
+      </section>
+    </div>
+  );
+};
+
+const AmenitiesPage = () => {
+  const amenities = [
+    { title: "Spacious 3 Bedrooms", desc: "Enjoy comfortable, well-furnished bedrooms designed for relaxation and a restful stay.", icon: <BedDouble size={40}/> },
+    { title: "Wi-Fi & Smart TV", desc: "Stay connected and enjoy entertainment with Wi-Fi and Smart TV facilities.", icon: <Tv size={40}/> },
+    { title: "Fully Equipped Kitchen", desc: "Cook with convenience using the refrigerator, cooking gas, stove, cutlery, and essential kitchenware.", icon: <Utensils size={40}/> },
+    { title: "Games & Recreation", desc: "Enjoy indoor and outdoor entertainment and spend quality time with your group.", icon: <Gamepad2 size={40}/> },
+    { title: "Bonfire Area", desc: "Enjoy memorable evenings around a bonfire under the stars. (Available on request, charges apply)", icon: <Flame size={40}/> },
+    { title: "Security & CCTV", desc: "Your safety is important. The property provides security arrangements and CCTV coverage.", icon: <Shield size={40}/> },
+    { title: "Spacious Hall", desc: "A comfortable shared space for gatherings, entertainment, and indoor activities.", icon: <HomeIcon size={40}/> },
+    { title: "Bathrooms", desc: "Well-maintained bathrooms with comfortable facilities.", icon: <Bath size={40}/> },
+  ];
+
+  return (
+    <div className="animate-fade-in bg-stone-50 min-h-screen">
+       <PageHero 
+        title="EVERYTHING FOR A COMFORTABLE STAY" 
+        subtitle="Enjoy thoughtfully provided amenities designed to make your stay convenient, relaxing, and enjoyable."
+        bgImage={IMAGES.heroAmenities}
+      />
+      <div className="max-w-7xl mx-auto py-24 px-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {amenities.map((item, i) => (
+            <div key={i} className="bg-white p-10 shadow-sm border border-stone-100 hover:shadow-xl transition-shadow duration-300 rounded-sm">
+              <div className="text-slate-800 mb-6">{item.icon}</div>
+              <h3 className="font-serif text-xl mb-4 text-slate-900">{item.title}</h3>
+              <p className="text-slate-600 font-light leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const GalleryPage = () => {
+  const images = [
+    IMAGES.heroHome, IMAGES.exterior, IMAGES.bedroom1, IMAGES.hall, 
+    IMAGES.kitchen, IMAGES.bathroom, IMAGES.bedroom2, IMAGES.bonfire, IMAGES.yercaudLake
+  ];
+
+  return (
+    <div className="animate-fade-in bg-white min-h-screen">
+       <PageHero 
+        title="EXPERIENCE VAMSI'S WOODSIDE" 
+        subtitle="Take a closer look at the spaces, interiors, and surroundings that make your stay special."
+        bgImage={IMAGES.heroGallery}
+      />
+      <div className="max-w-7xl mx-auto py-24 px-6">
+         {/* Simplified Gallery without complex filtering for single file robustness, focus on aesthetic grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {images.map((src, i) => (
+            <div key={i} className="relative h-80 overflow-hidden group cursor-pointer bg-stone-100">
+              <img src={src} alt={`Gallery image ${i+1}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DiscoverPage = () => {
+  return (
+    <div className="animate-fade-in bg-stone-50 min-h-screen">
+      <PageHero 
+        title="DISCOVER THE BEAUTY OF YERCAUD" 
+        subtitle="Explore the peaceful charm of Yercaud and enjoy a refreshing getaway surrounded by nature."
+        bgImage={IMAGES.heroDiscover}
+      />
+      
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto space-y-20">
+          {[
+            { title: "A REFRESHING ESCAPE", desc: "Discover the scenic surroundings of Yercaud, where peaceful landscapes and refreshing weather create the perfect setting for a relaxing vacation." },
+            { title: "TIME WITH YOUR LOVED ONES", desc: "Whether it's a family vacation, a friends' getaway, or a special gathering, enjoy meaningful moments in a comfortable and peaceful environment." },
+            { title: "RELAX & RECONNECT", desc: "Take a break from busy routines, enjoy the surroundings, and spend time doing what matters most." }
+          ].map((sec, i) => (
+             <div key={i} className="text-center">
+                <h3 className="font-serif text-3xl text-slate-900 mb-6">{sec.title}</h3>
+                <p className="text-slate-600 text-lg font-light leading-relaxed">{sec.desc}</p>
+                {i !== 2 && <div className="w-12 h-px bg-slate-300 mx-auto mt-16"></div>}
+             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="py-24 px-6 bg-white border-t border-stone-200">
+        <div className="max-w-7xl mx-auto">
+           <SectionHeading title="EXPLORE YERCAUD" subtitle="Nearby Attractions" centered />
+           
+           <div className="grid md:grid-cols-3 gap-8 mt-12">
+              {[
+                { name: "Yercaud Lake", dist: "Approx 10 km", img: IMAGES.yercaudLake, desc: "A scenic lake surrounded by gardens and trees, perfect for boating." },
+                { name: "Lady's Seat", dist: "Approx 12 km", img: IMAGES.heroDiscover, desc: "A viewpoint offering spectacular panoramic views of the plains below." },
+                { name: "Kiliyur Falls", dist: "Approx 13 km", img: IMAGES.heroHome, desc: "A majestic waterfall situated in the Servaroyan hill range." }
+              ].map((attr, i) => (
+                 <div key={i} className="bg-stone-50 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <img src={attr.img} alt={attr.name} className="w-full h-48 object-cover" />
+                    <div className="p-6 text-center">
+                      <h4 className="font-serif text-xl mb-2">{attr.name}</h4>
+                      <p className="text-sm text-emerald-700 font-semibold mb-4">{attr.dist}</p>
+                      <p className="text-slate-600 text-sm font-light mb-6">{attr.desc}</p>
+                      <Button variant="outlineDark" className="px-4 py-2 text-xs" onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(attr.name + " Yercaud")}`, '_blank')}>
+                        DIRECTIONS
+                      </Button>
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const AboutPage = ({ setPage }) => {
+  return (
+    <div className="animate-fade-in bg-white min-h-screen">
+       <PageHero 
+        title="ABOUT VAMSI'S WOODSIDE" 
+        subtitle="WHERE COMFORT MEETS NATURE"
+        bgImage={IMAGES.heroAbout}
+      />
+      <section className="py-24 px-6 max-w-4xl mx-auto text-center space-y-8 text-lg text-slate-700 font-light leading-relaxed">
+        <p>Welcome to Vamsis Woodside, a peaceful villa retreat nestled in the serene surroundings of Yercaud.</p>
+        <p>Our villa is designed to provide a comfortable and relaxing experience for families, friends, and groups seeking a memorable getaway.</p>
+        <p>With spacious bedrooms, a welcoming hall, convenient kitchen facilities, and entertainment spaces, Vamsis Woodside offers an inviting environment to relax and reconnect.</p>
+        <p className="font-serif text-2xl text-slate-900 my-12 italic">"We believe that the best memories are created when people come together."</p>
+        <p>Whether you're enjoying a family vacation, celebrating special moments, or simply taking a break from everyday life, Vamsis Woodside welcomes you to experience the beauty of a peaceful stay.</p>
+      </section>
+
+      <section className="py-24 bg-stone-100">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 text-center">
+          <div className="bg-white p-12 shadow-sm">
+            <h3 className="font-serif text-2xl mb-6">OUR EXPERIENCE</h3>
+            <p className="text-slate-600 font-light">A comfortable villa experience where relaxation, togetherness, and nature come together.</p>
+          </div>
+          <div className="bg-white p-12 shadow-sm">
+            <h3 className="font-serif text-2xl mb-6">OUR PROMISE</h3>
+            <p className="text-slate-600 font-light">To provide a comfortable, welcoming, and memorable stay for every guest.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 bg-slate-900 text-center px-4">
+        <h2 className="font-serif text-4xl text-white mb-8">EXPERIENCE VAMSI'S WOODSIDE</h2>
+        <Button variant="secondary" onClick={() => setPage('contact')}>BOOK YOUR STAY</Button>
+      </section>
+    </div>
+  );
+};
+
+const ContactPage = () => {
+  const [formStatus, setFormStatus] = useState(null);
+
+  const handleWhatsApp = () => {
+    const text = "Hello Vamsis Woodside,%0A%0AI would like to enquire about booking a stay.%0A%0AName: %0ACheck-in: %0ACheck-out: %0AGuests: %0A%0APlease share the availability and pricing details.";
+    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${text}`, '_blank');
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormStatus("Thank you for your enquiry. We will get back to you shortly.");
+    e.target.reset();
+    setTimeout(() => setFormStatus(null), 5000);
+  };
+
+  return (
+    <div className="animate-fade-in bg-stone-50 min-h-screen">
+      <PageHero 
+        title="PLAN YOUR STAY WITH US" 
+        subtitle="Have questions or planning your next getaway? Get in touch with us to check availability and plan your stay."
+        bgImage={IMAGES.heroContact}
+      />
+      
+      <div className="max-w-7xl mx-auto py-24 px-6 grid lg:grid-cols-2 gap-16">
+        {/* Contact Info & Form */}
+        <div>
+           <SectionHeading title="GET IN TOUCH" />
+           <div className="space-y-6 text-slate-600 font-light mb-12">
+              <p className="flex items-center text-lg"><Phone className="mr-4 text-slate-900"/> {PHONE_1} &nbsp;|&nbsp; {PHONE_2}</p>
+              <p className="flex items-start text-lg"><MapPin className="mr-4 mt-1 text-slate-900"/> <span>Vamsis Woodside<br/>{ADDRESS}<br/><span className="text-sm italic">Approx 10 km from Yercaud Lake</span></span></p>
+           </div>
+           
+           <div className="flex gap-4 mb-12">
+              <Button variant="primary" onClick={() => window.location.href = `tel:${PHONE_1}`}>CALL NOW</Button>
+              <Button variant="outlineDark" onClick={handleWhatsApp} className="border-green-600 text-green-700 hover:bg-green-600 hover:text-white hover:border-green-600">WHATSAPP US</Button>
+           </div>
+
+           <div className="bg-white p-8 border border-stone-200 shadow-sm rounded-sm">
+              <h3 className="font-serif text-2xl mb-6">Booking Enquiry</h3>
+              {formStatus && <div className="mb-6 p-4 bg-green-50 text-green-800 border border-green-200 rounded">{formStatus}</div>}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                   <input type="text" placeholder="Guest Name *" required className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                   <input type="tel" placeholder="Phone Number *" required className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                 </div>
+                 <input type="email" placeholder="Email Address" className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <label className="text-xs text-slate-500 mb-1 block">Check-in Date *</label>
+                     <input type="date" required className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50 text-slate-600" />
+                   </div>
+                   <div>
+                     <label className="text-xs text-slate-500 mb-1 block">Check-out Date *</label>
+                     <input type="date" required className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50 text-slate-600" />
+                   </div>
+                 </div>
+                 <div className="grid grid-cols-3 gap-4">
+                   <input type="number" placeholder="Total Guests *" required min="1" className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                   <input type="number" placeholder="Adults" min="1" className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                   <input type="number" placeholder="Children" min="0" className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50" />
+                 </div>
+                 <textarea placeholder="Special Requests" rows="3" className="w-full p-3 border border-stone-300 focus:outline-none focus:border-slate-900 bg-stone-50"></textarea>
+                 <Button variant="primary" className="w-full" type="submit">SEND ENQUIRY</Button>
+              </form>
+           </div>
+        </div>
+
+        {/* House Rules */}
+        <div>
+          <div className="bg-slate-900 text-white p-8 md:p-12 rounded-sm shadow-xl sticky top-32">
+            <h3 className="font-serif text-3xl mb-8 border-b border-slate-700 pb-4">House Rules & Policies</h3>
+            <ul className="space-y-6 text-sm font-light text-slate-300">
+              <li><strong className="text-white">Check-in & Check-out:</strong> Please enquire with the property regarding timings.</li>
+              <li><strong className="text-white">Property Responsibility:</strong> Guests are responsible for any damages caused during their stay.</li>
+              <li><strong className="text-white">Pets:</strong> Pets are not allowed on the property.</li>
+              <li><strong className="text-white">Generator:</strong> Provided for basic power requirements only.</li>
+              <li><strong className="text-white">Projector & Screen:</strong> Available until 10:00 PM; must be operated using mains power.</li>
+              <li><strong className="text-white">Noise Policy:</strong> Please keep noise levels low after 10:00 PM to respect wildlife and neighbours.</li>
+              <li><strong className="text-white">Speakers:</strong> Portable speakers permitted for balcony use only.</li>
+              <li><strong className="text-white">Games:</strong> Children's cricket sets available. Return other games to caretaker.</li>
+              <li><strong className="text-white">Driver Accommodation:</strong> Available at ₹500 per day.</li>
+              <li><strong className="text-white">Bonfire:</strong> Available on request at an additional charge of ₹1,000 per session.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main App Component ---
+
+export default function App() {
+  const [page, setPage] = useState('home');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
+
+  return (
+    <div className="font-sans text-slate-800 antialiased bg-stone-50 overflow-x-hidden selection:bg-slate-900 selection:text-white">
+      <Navbar currentPage={page} setPage={setPage} />
+      <main className="min-h-screen">
+        {page === 'home' && <HomePage setPage={setPage} />}
+        {page === 'stay' && <StayPage setPage={setPage} />}
+        {page === 'amenities' && <AmenitiesPage />}
+        {page === 'gallery' && <GalleryPage />}
+        {page === 'discover' && <DiscoverPage />}
+        {page === 'about' && <AboutPage setPage={setPage} />}
+        {page === 'contact' && <ContactPage />}
+      </main>
+      <Footer setPage={setPage} />
+    </div>
+  );
+}
