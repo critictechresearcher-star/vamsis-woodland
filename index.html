@@ -12,13 +12,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- 3. Configure Tailwind to use the fonts -->
-    <script>
+   <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               serif: ['Playfair Display', 'serif'],
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+              'scale-in': 'scaleIn 1.2s ease-out forwards',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(40px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              scaleIn: {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              }
             }
           }
         }
@@ -44,7 +58,7 @@
 
     <!-- 6. Your React Application -->
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect } from 'react';
+        import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
         import { 
           Menu, X, MapPin, Phone, Mail, Wifi, Tv, 
@@ -54,6 +68,31 @@
         } from 'lucide-react';
 
         // --- Global Data & Constants ---
+       const Reveal = ({ children, animation = "animate-fade-in-up", delay = "0ms" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.15 } // Triggers when 15% of the element is visible
+    );
+    
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={`opacity-0 ${isVisible ? animation : ''}`} style={{ animationDelay: delay }}>
+      {children}
+    </div>
+  );
+};
         const PHONE_1 = "+91 94449 66732";
         const PHONE_2 = "+91 75500 09664";
         const ADDRESS = "1523/4, Muluvi, Elavadi, Tamil Nadu – 636602";
@@ -239,19 +278,23 @@
             <section className="py-24 px-6 bg-stone-50">
               <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
                 <div>
+                <Reveal>
                   <SectionHeading title="YOUR PRIVATE ESCAPE INTO NATURE" subtitle="Welcome" />
+                  </Reveal>
                   <div className="space-y-6 text-slate-600 font-light text-lg leading-relaxed">
                     <p>Welcome to Vamsis Woodside, a peaceful villa retreat nestled in the serene surroundings of Yercaud.</p>
                     <p>Designed for families and friends, our villa brings together spacious interiors, comfortable bedrooms, and inviting spaces for relaxation and togetherness.</p>
                     <p>Whether you're planning a family vacation, a weekend getaway, or a memorable gathering, Vamsis Woodside offers a refreshing escape from everyday life.</p>
                   </div>
-                  <div className="mt-10">
+                 <div className="mt-10">
                     <Button variant="outlineDark" onClick={() => setPage('stay')}>DISCOVER OUR VILLA</Button>
                   </div>
                 </div>
-                <div className="relative h-[600px] overflow-hidden rounded-sm shadow-2xl">
-                  <img src={IMAGES.exterior} alt="Villa Exterior" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                </div>
+                <Reveal animation="animate-scale-in">
+                  <div className="relative h-[600px] overflow-hidden rounded-sm shadow-2xl">
+                    <img src={IMAGES.exterior} alt="Villa Exterior" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                  </div>
+                </Reveal>
               </div>
             </section>
             <section className="py-24 px-6 bg-white">
